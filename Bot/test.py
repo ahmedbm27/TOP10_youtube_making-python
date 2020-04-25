@@ -14,16 +14,9 @@ SECONDS_IN_HOUR = 3600
 SECONDS_IN_MINUTE = 60
 HOURS_IN_DAY = 24
 MICROSECONDS_IN_MILLISECOND = 1000
-test_sentence=""
-article_name="Top 10 TV Shows Cancelled Too Soon"
-file = open("../Articles/%s/data.json"%article_name,"r")
-json_data = json.load(file)
-file.close()   
 
-start_time = datetime.timedelta(hours=0, minutes=0, seconds=0)
-block_num =1
 
-def time_addition(sentence,current_time,extra_avg,audio_path,save_path):# this function make srt file
+def time_addition(sentence,current_time,extra_avg,audio_path,save_path,length):# this function make srt file
 #if it is string we cant add an int to string so we add ''
   sentence=sentence.split(" ")
   sentence.insert(6,"\n")
@@ -45,7 +38,8 @@ def time_addition(sentence,current_time,extra_avg,audio_path,save_path):# this f
     f.write("\n")
     f.write(sentence)
     f.write("\n")
-    f.write("\n")
+    if length != block_num:
+      f.write("\n")
   return end_time
 def timedelta_to_srt_timestamp(timedelta_timestamp): #this function return a string contain .srt file Time
     r"""
@@ -80,10 +74,10 @@ def get_extra_average(file_name,article_name):
   # print(audios_duration)
   audio_parts_duration =0 # hedhy sum mta3 durations mta3 audio parts
   for audio in audio_parts:
-    x=1
-    audio_part= AudioFileClip(audio)
-    audio_parts_duration += audio_part.duration
-    audio_part.close()
+    if os.path.basename(audio) !="title.mp3":
+      audio_part= AudioFileClip(audio)
+      audio_parts_duration += audio_part.duration
+      audio_part.close()
   # print("%s"%audio_parts_duration)
   average = (audio_parts_duration-audios_duration)/len(audio_parts)
   # print(average)
@@ -99,45 +93,7 @@ def save_durations_json(file_name,full_audio_path,type_):
   with open('../Articles/%s/data.json'%article_name,"w")   as file_json:
     json.dump(json_data,file_json) 
 
-############ this is to make STR file for the TOP ############
-for i in range (10):
-    
-    test_sentence  = json_data["video"][i+1]["list_content"]
-    extra_avg=get_extra_average(i+1,article_name)
-    for ind,line in enumerate(test_sentence):
-      audio_path = "../Articles/%s/audio/%s/%s.mp3"%(article_name,str(i+1),str(ind+1))
-      save_path = "../Articles/%s/%s/content.srt"%(article_name,str(i+1))
-      start_time = time_addition(line.replace("\n",""),start_time,extra_avg,audio_path,save_path)
-      block_num +=1
-    full_audio_path = "../Articles/%s/audio/%s.mp3"%(article_name,str(i+1))
-    save_durations_json(i+1,full_audio_path,"content")
-# ############################################################
 
-# ############ this is to make STR file for the intro,conclusion ############
-block_num =1
-test_sentence  = json_data["video"][0]["list_content"]
-extra_avg=get_extra_average(json_data["video"][0]["title"],article_name)
-for ind,line in enumerate(test_sentence):
-  audio_path = "../Articles/%s/audio/%s/%s.mp3"%(article_name,json_data["video"][0]["title"],str(ind+1))
-  save_path = "../Articles/%s/%s/content.srt"%(article_name,json_data["video"][0]["title"])
-  start_time = time_addition(line.replace("\n",""),start_time,extra_avg,audio_path,save_path)
-  block_num +=1
-full_audio_path = "../Articles/%s/audio/%s.mp3"%(article_name,json_data["video"][0]["title"])
-save_durations_json(0,full_audio_path,"content")
-# ############################################################
-
-############ this is to make STR file for the titles ############
-block_num =1
-for i in range (10):
-    audio_path = "../Articles/%s/audio/%s/title.mp3"%(article_name,str(i+1))
-    save_path = "../Articles/%s/%s/title.srt"%(article_name,str(i+1))
-    test_sentence  = json_data["video"][i+1]["title"]
-    extra_avg=0
-    start_time = time_addition(test_sentence.replace("\n",""),start_time,extra_avg,audio_path,save_path)
-    block_num +=1
-    full_audio_path = "../Articles/%s/audio/%s/title.mp3"%(article_name,str(i+1))
-    save_durations_json(i+1,full_audio_path,"title")
-############################################################
 
 
 #     print("doing file %s"%i)
@@ -294,4 +250,58 @@ def website_parser(url):
   create_new_article(title,headers,article_text)
 
 
-# website_parser("https://listverse.com/2020/04/22/top-10-tv-shows-cancelled-too-soon/")
+#website_parser("https://listverse.com/2020/04/22/top-10-tv-shows-cancelled-too-soon/")
+
+test_sentence=""
+article_name="Top 10 TV Shows Cancelled Too Soon"
+file = open("../Articles/%s/data.json"%article_name,"r")
+json_data = json.load(file)
+file.close()   
+
+start_time = datetime.timedelta(hours=0, minutes=0, seconds=0)
+block_num =1
+############ this is to make STR file for the TOP ############
+for i in range (10):
+    
+    test_sentence  = json_data["video"][i+1]["list_content"]
+    extra_avg=get_extra_average(i+1,article_name)
+    for ind,line in enumerate(test_sentence):
+      audio_path = "../Articles/%s/audio/%s/%s.mp3"%(article_name,str(i+1),str(ind+1))
+      save_path = "../Articles/%s/%s/content.srt"%(article_name,str(i+1))
+      start_time = time_addition(line.replace("\n",""),start_time,extra_avg,audio_path,save_path,len(test_sentence))
+      block_num +=1
+    print("content %s done"%str(i+1))
+    start_time = datetime.timedelta(hours=0, minutes=0, seconds=0)
+    block_num =1
+    full_audio_path = "../Articles/%s/audio/%s.mp3"%(article_name,str(i+1))
+    save_durations_json(i+1,full_audio_path,"content")
+############################################################
+
+# ############ this is to make STR file for the intro,conclusion ############
+block_num =1
+test_sentence  = json_data["video"][0]["list_content"]
+extra_avg=get_extra_average(json_data["video"][0]["title"],article_name)
+for ind,line in enumerate(test_sentence):
+  audio_path = "../Articles/%s/audio/%s/%s.mp3"%(article_name,json_data["video"][0]["title"],str(ind+1))
+  save_path = "../Articles/%s/%s/content.srt"%(article_name,json_data["video"][0]["title"])
+  start_time = time_addition(line.replace("\n",""),start_time,extra_avg,audio_path,save_path,len(test_sentence))
+  block_num +=1
+print("intro content done")
+full_audio_path = "../Articles/%s/audio/%s.mp3"%(article_name,json_data["video"][0]["title"])
+save_durations_json(0,full_audio_path,"content")
+# ############################################################
+
+############ this is to make STR file for the titles ############
+block_num =1
+for i in range (10):
+    audio_path = "../Articles/%s/audio/%s/title.mp3"%(article_name,str(i+1))
+    save_path = "../Articles/%s/%s/title.srt"%(article_name,str(i+1))
+    test_sentence  = json_data["video"][i+1]["title"]
+    extra_avg=0
+    start_time = datetime.timedelta(hours=0, minutes=0, seconds=0)
+    start_time = time_addition(test_sentence.replace("\n",""),start_time,extra_avg,audio_path,save_path,1)
+    block_num +=1
+    print("title %s done"%str(i+1))
+    full_audio_path = "../Articles/%s/audio/%s/title.mp3"%(article_name,str(i+1))
+    save_durations_json(i+1,full_audio_path,"title")
+############################################################
