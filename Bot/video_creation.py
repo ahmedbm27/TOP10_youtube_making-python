@@ -88,8 +88,9 @@ def edit_video(article_name):
     images=glob.glob("../Articles/%s/%s/images/*"%(article_name,str(i)))
     videos=glob.glob("../Articles/%s/%s/videos/*"%(article_name,str(i)))
     title= json_data["video"][file_name]["title"].replace("\n"," ")
+    #prepare subtitle
     generator = lambda txt: TextClip(txt, font='DejaVu-Sans-Bold', fontsize=40, color='white')
-    subtitles = SubtitlesClip("test58.srt", generator)
+    subtitles = SubtitlesClip("../Articles/%s/%s/content.srt"%(article_name,str(i)), generator)
     title_duration= float(json_data["video"][file_name]["title_duration"])
     content_duration = float(json_data["video"][file_name]["content_duration"])
     #now we need to devide content duration over images and videos
@@ -99,7 +100,7 @@ def edit_video(article_name):
         video_clips.append(VideoFileClip(video).subclip(0,media_duration))
     image_clips=[]
     for image in images:
-        image_clips.append(VideoFileClip(image).set_duration(media_duration))
+        image_clips.append(ImageClip(image).set_duration(media_duration))
 
     content_list=image_clips
  
@@ -108,8 +109,8 @@ def edit_video(article_name):
     print(content_list)
     content_clip = concatenate_videoclips(content_list)
     content_audio_path = "../Articles/%s/audio/%s.mp3"%(article_name,str(i))
-    content_clip.set_audio(content_audio_path)
-
+    content_clip.set_audio(AudioFileClip(content_audio_path))
+    content_final= CompositeVideoClip([content_clip, subtitles.set_pos(('center','bottom'))])
 
     #create the title
     title_text_clip = TextClip('%s'%(modified_title),color='white', font="DejaVu-Sans-Bold",fontsize=60,size=(1920,1080)).set_pos('center')
